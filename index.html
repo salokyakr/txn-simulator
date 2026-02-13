@@ -1,231 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperPG Transaction Manager</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperPG Transaction Manager</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --accent-bg: #f1f5f9;
-            --error-bg: #fff1f2;
-            --error-border: #fecaca;
-            --error-text: #991b1b;
-            --success-color: #10b981;
-            --failure-color: #ef4444;
-            --warning-color: #f59e0b;
-        }
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --accent-bg: #f1f5f9;
+      --error-bg: #fff1f2;
+      --error-border: #fecaca;
+      --error-text: #991b1b;
+      --success-color: #10b981;
+      --failure-color: #ef4444;
+      --warning-color: #f59e0b;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
 
-        .container {
-            background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-            width: 100%;
-            max-width: 480px;
-            border: 1px solid #e2e8f0;
-        }
+    .container {
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+      width: 100%;
+      max-width: 480px;
+      border: 1px solid #e2e8f0;
+    }
 
-        .header {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 1.5rem;
-        }
+    .header {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 1.5rem;
+    }
 
-        .logo { height: 45px; width: auto; }
+    .logo {
+      height: 45px;
+      width: auto;
+    }
 
-        .section-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--primary);
-            font-weight: 700;
-            margin-bottom: 1rem;
-            display: block;
-        }
+    .section-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: block;
+    }
 
-        .input-group { margin-bottom: 1.25rem; position: relative; }
+    .input-group {
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
 
-        label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #475569;
-        }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #475569;
+    }
 
-        input, select {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            font-size: 0.95rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            outline: none;
-            box-sizing: border-box;
-        }
+    input,
+    select {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      font-size: 0.95rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      outline: none;
+      box-sizing: border-box;
+    }
 
-        input:focus, select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-        }
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
 
-        /* Custom Scrollable Dropdown */
-        .dropdown-container {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            max-height: 180px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            margin-top: 5px;
-        }
+    .dropdown-container {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      margin-top: 5px;
+    }
 
-        .dropdown-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background 0.2s;
-        }
+    .dropdown-item {
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.2s;
+    }
 
-        .dropdown-item:hover { background-color: #f8fafc; color: var(--primary); }
-        .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover {
+      background-color: #f8fafc;
+      color: var(--primary);
+    }
 
-        #upiIntent { background-color: #fafbfd; border: 1.5px dashed #cbd5e1; font-family: 'Courier New', monospace; }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .readonly-field { background-color: #f1f5f9; color: #64748b; cursor: not-allowed; }
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
 
-        #errorGroup {
-            background: var(--error-bg);
-            padding: 1.25rem;
-            border-radius: 12px;
-            border: 1px solid var(--error-border);
-            margin-top: 1rem;
-            display: none;
-        }
+    #upiIntent {
+      background-color: #fafbfd;
+      border: 1.5px dashed #cbd5e1;
+      font-family: 'Courier New', monospace;
+    }
 
-        .error-msg-preview { font-size: 0.75rem; color: var(--error-text); margin-top: 0.5rem; font-style: italic; min-height: 1rem; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
 
-        .btn-submit {
-            width: 100%;
-            padding: 1rem;
-            background-color: var(--primary);
-            color: white;
-            font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 1.5rem;
-            transition: 0.2s;
-        }
+    .readonly-field {
+      background-color: #f1f5f9;
+      color: #64748b;
+      cursor: not-allowed;
+    }
 
-        .btn-submit:hover { background-color: var(--primary-hover); }
-        .btn-submit:disabled { background-color: #cbd5e1; }
+    #errorGroup {
+      background: var(--error-bg);
+      padding: 1.25rem;
+      border-radius: 12px;
+      border: 1px solid var(--error-border);
+      margin-top: 1rem;
+      display: none;
+    }
 
-        #snackbar {
-            visibility: hidden;
-            min-width: 300px;
-            color: #fff;
-            text-align: center;
-            border-radius: 12px;
-            padding: 16px;
-            position: fixed;
-            z-index: 1100;
-            left: 50%;
-            bottom: 30px;
-            transform: translateX(-50%);
-            font-weight: 500;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
+    .error-msg-preview {
+      font-size: 0.75rem;
+      color: var(--error-text);
+      margin-top: 0.5rem;
+      font-style: italic;
+      min-height: 1rem;
+    }
 
-        #snackbar.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+    .btn-submit {
+      width: 100%;
+      padding: 1rem;
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 1.5rem;
+      transition: 0.2s;
+    }
 
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-    </style>
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      background-color: #cbd5e1;
+    }
+
+    #snackbar {
+      visibility: hidden;
+      min-width: 300px;
+      color: #fff;
+      text-align: center;
+      border-radius: 12px;
+      padding: 16px;
+      position: fixed;
+      z-index: 1100;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-weight: 500;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    #snackbar.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+
+    @keyframes fadein {
+      from {
+        bottom: 0;
+        opacity: 0;
+      }
+
+      to {
+        bottom: 30px;
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeout {
+      from {
+        bottom: 30px;
+        opacity: 1;
+      }
+
+      to {
+        bottom: 0;
+        opacity: 0;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="container">
+  <div class="container">
     <div class="header">
-        <img src="https://hyperpg.in/HyperPG.svg" alt="HyperPG Logo" class="logo">
+      <img src="https://hyperpg.in/HyperPG.svg" alt="HyperPG Logo" class="logo">
     </div>
-    
+
     <form id="txnForm">
-        <span class="section-label">Link Input</span>
+      <span class="section-label">Link Input</span>
+      <div class="input-group">
+        <label for="upiIntent">Paste Intent Link</label>
+        <input type="text" id="upiIntent" placeholder="upi://pay?..." oninput="parseUPI()">
+      </div>
+
+      <span class="section-label">Transaction Data</span>
+      <div class="input-group">
+        <label>Transaction ID (order_id)</label>
+        <input type="text" id="txnId" class="readonly-field" readonly>
+      </div>
+
+      <div class="row">
         <div class="input-group">
-            <label for="upiIntent">Paste Intent Link</label>
-            <input type="text" id="upiIntent" placeholder="upi://pay?..." oninput="parseUPI()">
+          <label>Amount</label>
+          <input type="number" id="amount" step="0.01" class="readonly-field" readonly>
         </div>
-
-        <span class="section-label">Transaction Data</span>
         <div class="input-group">
-            <label>Transaction ID (order_id)</label>
-            <input type="text" id="txnId" class="readonly-field" readonly>
+          <label>Merchant ID</label>
+          <input type="text" id="merchantId" value="jpcld">
         </div>
+      </div>
 
-        <div class="row">
-            <div class="input-group">
-                <label>Amount</label>
-                <input type="text" id="amount" class="readonly-field" readonly>
-            </div>
-            <div class="input-group">
-                <label>Merchant ID</label>
-                <input type="text" id="merchantId" value="jpcld">
-            </div>
-        </div>
+      <div class="input-group">
+        <label>Status</label>
+        <select id="status" onchange="updateStatusUI()">
+          <option value="success">Success</option>
+          <option value="failure">Failure</option>
+        </select>
+      </div>
 
+      <div id="errorGroup">
         <div class="input-group">
-            <label>Status</label>
-            <select id="status" onchange="updateStatusUI()">
-                <option value="success">Success</option>
-                <option value="failure">Failure</option>
-            </select>
+          <label>Search Error Code</label>
+          <input type="text" id="errorCodeInput" placeholder="Type to search codes..." autocomplete="off"
+            onfocus="showDropdown()" oninput="filterDropdown()">
+          <div id="errorCodeDropdown" class="dropdown-container"></div>
+          <div id="errorMsgPreview" class="error-msg-preview"></div>
         </div>
+      </div>
 
-        <div id="errorGroup">
-            <div class="input-group">
-                <label>Search Error Code</label>
-                <input type="text" id="errorCodeInput" placeholder="Type to search codes..." autocomplete="off" onfocus="showDropdown()" oninput="filterDropdown()">
-                <div id="errorCodeDropdown" class="dropdown-container">
-                    </div>
-                <div id="errorMsgPreview" class="error-msg-preview"></div>
-            </div>
-        </div>
-
-        <button type="submit" id="submitBtn" class="btn-submit">Submit</button>
+      <button type="submit" id="submitBtn" class="btn-submit">Submit</button>
     </form>
-</div>
+  </div>
 
-<div id="snackbar"></div>
+  <div id="snackbar"></div>
 
-<script>
+  <script>
     const ERROR_MAP = {
       "L04": "RULE ATTRIBUTE VALUE MUST BE PRESENT; NUMERIC; MINLENGTH 1 MAXLENGTH 255",
       "V1": "SEQNUM MISMATCH (REMITTER)",
@@ -362,7 +426,6 @@
       "U53": "Transaction failed",
       "VP": "WITHDRAWAL STOPPED OWING TO DEATH OF ACCOUNT HOLDER",
       "XL": "Your card has expired please get in touch with your branch",
-      "00": "Collect request sent successfully",
       "UP": "PSP TIME-OUT",
       "SA": "TRANSACTION NOT PERMITTED FOR THIS A/C TYPE",
       "ND": "FAILURE",
@@ -393,96 +456,127 @@
     const dropdown = document.getElementById('errorCodeDropdown');
     const inputField = document.getElementById('errorCodeInput');
 
+    let globalPayeeVpa = "";
+    let globalCurrency = "INR";
+
     function showDropdown() {
-        filterDropdown();
-        dropdown.style.display = 'block';
+      filterDropdown();
+      dropdown.style.display = 'block';
     }
 
     function filterDropdown() {
-        const val = inputField.value.toUpperCase();
-        dropdown.innerHTML = '';
-        Object.keys(ERROR_MAP)
-            .filter(code => code.toUpperCase().includes(val))
-            .sort()
-            .forEach(code => {
-                const item = document.createElement('div');
-                item.className = 'dropdown-item';
-                item.innerText = code;
-                item.onclick = () => selectCode(code);
-                dropdown.appendChild(item);
-            });
+      const val = inputField.value.toUpperCase();
+      dropdown.innerHTML = '';
+      Object.keys(ERROR_MAP)
+        .filter(code => code.toUpperCase().includes(val))
+        .sort()
+        .forEach(code => {
+          const item = document.createElement('div');
+          item.className = 'dropdown-item';
+          item.innerText = code;
+          item.onclick = () => selectCode(code);
+          dropdown.appendChild(item);
+        });
     }
 
     function selectCode(code) {
-        inputField.value = code;
-        document.getElementById('errorMsgPreview').innerText = ERROR_MAP[code];
-        dropdown.style.display = 'none';
+      inputField.value = code;
+      document.getElementById('errorMsgPreview').innerText = ERROR_MAP[code];
+      dropdown.style.display = 'none';
     }
 
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.input-group')) dropdown.style.display = 'none';
+      if (!e.target.closest('.input-group')) dropdown.style.display = 'none';
     });
 
     function parseUPI() {
-        const urlString = document.getElementById('upiIntent').value;
-        if (!urlString.includes('?')) return;
-        const params = new URLSearchParams(urlString.split('?')[1]);
-        document.getElementById('txnId').value = params.get('tr') || params.get('tid') || '';
-        document.getElementById('amount').value = params.get('am') || '0.00';
+      const urlString = document.getElementById('upiIntent').value;
+      if (!urlString.includes('?')) return;
+      const params = new URLSearchParams(urlString.split('?')[1]);
+
+      document.getElementById('txnId').value = params.get('tr') || params.get('tid') || '';
+
+      // Change: Ensure amount is formatted as float with 2 decimals
+      const rawAm = params.get('am') || '0.00';
+      document.getElementById('amount').value = parseFloat(rawAm).toFixed(2);
+
+      globalPayeeVpa = params.get('pa') || "";
+      globalCurrency = params.get('cu') || "INR";
     }
 
     function updateStatusUI() {
-        document.getElementById('errorGroup').style.display = 
-            document.getElementById('status').value === 'failure' ? 'block' : 'none';
+      document.getElementById('errorGroup').style.display =
+        document.getElementById('status').value === 'failure' ? 'block' : 'none';
+    }
+
+    function getISTTimestamp() {
+      const date = new Date();
+      const istOffset = 5.5 * 60 * 60 * 1000;
+      const istDate = new Date(date.getTime() + istOffset);
+      return istDate.toISOString().replace('Z', '+05:30');
     }
 
     function showSnackbar(message, type) {
-        const x = document.getElementById("snackbar");
-        x.innerText = message;
-        x.style.backgroundColor = (type === "SUCCESS") ? "var(--success-color)" : (type === "FAILURE" ? "var(--failure-color)" : "var(--warning-color)");
-        x.className = "show";
-        setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+      const x = document.getElementById("snackbar");
+      x.innerText = message;
+      x.style.backgroundColor = (type === "SUCCESS") ? "var(--success-color)" : (type === "FAILURE" ? "var(--failure-color)" : "var(--warning-color)");
+      x.className = "show";
+      setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
     }
 
     document.getElementById('txnForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const submitBtn = document.getElementById('submitBtn');
-        const merchantId = document.getElementById('merchantId').value;
-        const statusVal = document.getElementById('status').value;
-        const code = inputField.value;
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      const merchantId = document.getElementById('merchantId').value;
+      const statusVal = document.getElementById('status').value;
+      const selectedCode = inputField.value;
 
-        // Map status to "00" or "02" as requested
-        const statusMapping = { 'success': '00', 'failure': '02' };
+      const statusMapping = { 'success': '00', 'failure': '02' };
+      const rawAmount = document.getElementById('amount').value;
+      const amountAsFloat = Number(parseFloat(rawAmount).toFixed(2));
 
-        const payload = {
-            order_id: document.getElementById('txnId').value,
-            amount: document.getElementById('amount').value,
-            merchant_id: merchantId,
-            status: statusMapping[statusVal],
-            response_code: statusVal === 'failure' ? code : 'SUCCESS',
-            response_message: statusVal === 'failure' ? (ERROR_MAP[code] || 'FAILURE') : 'SUCCESS'
-        };
+      // Change: Payload amount sent as float string
+      const payload = {
+        order_id: document.getElementById('txnId').value,
+        amount: amountAsFloat,
+        merchant_id: merchantId,
+        payment_method: "UPI_PAY",
+        currency: globalCurrency,
+        payment_method_type: "UPI",
+        status: statusMapping[statusVal],
+        transaction_timestamp: getISTTimestamp(),
+        payee_vpa: globalPayeeVpa,
+        response_code: statusVal === 'failure' ? selectedCode : 'SUCCESS',
+        response_message: statusVal === 'failure' ? (ERROR_MAP[selectedCode] || 'FAILURE') : 'SUCCESS'
+      };
 
-        const targetUrl = `https://sandbox.hyperpg.in/v2/pay/webhooks/${merchantId}/DUMMY`;
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Processing...";
+      const targetUrl = `http://localhost:8080/v2/pay/webhooks/${merchantId}/DUMMY`;
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Processing...";
 
-        try {
-            const response = await fetch(targetUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            showSnackbar(result.message || "Processed", result.status);
-        } catch (error) {
-            showSnackbar("Network error or invalid JSON", "FAILURE");
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Submit";
+      try {
+        const response = await fetch(targetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        // Check if status is 2xx (e.g., 200, 201, etc.)
+        if (response.status >= 200 && response.status < 300) {
+          showSnackbar("Success", "SUCCESS");
+        } else {
+          showSnackbar("Failure", "FAILURE");
         }
+      } catch (error) {
+        // Handle network errors or total failures
+        showSnackbar("Failure", "FAILURE");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Submit";
+      }
     });
-</script>
+  </script>
 
 </body>
+
 </html>
