@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperPG Transaction Manager</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --accent-bg: #f1f5f9;
+            --error-bg: #fff1f2;
+            --error-border: #fecaca;
+            --error-text: #991b1b;
+            --success-color: #10b981;
+            --failure-color: #ef4444;
+            --warning-color: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            width: 100%;
+            max-width: 480px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .header {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 1.5rem;
+        }
+
+        .logo { height: 45px; width: auto; }
+
+        .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .input-group { margin-bottom: 1.25rem; position: relative; }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #475569;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 0.95rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Custom Scrollable Dropdown */
+        .dropdown-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-top: 5px;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover { background-color: #f8fafc; color: var(--primary); }
+        .dropdown-item:last-child { border-bottom: none; }
+
+        #upiIntent { background-color: #fafbfd; border: 1.5px dashed #cbd5e1; font-family: 'Courier New', monospace; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .readonly-field { background-color: #f1f5f9; color: #64748b; cursor: not-allowed; }
+
+        #errorGroup {
+            background: var(--error-bg);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--error-border);
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .error-msg-preview { font-size: 0.75rem; color: var(--error-text); margin-top: 0.5rem; font-style: italic; min-height: 1rem; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary);
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 1.5rem;
+            transition: 0.2s;
+        }
+
+        .btn-submit:hover { background-color: var(--primary-hover); }
+        .btn-submit:disabled { background-color: #cbd5e1; }
+
+        #snackbar {
+            visibility: hidden;
+            min-width: 300px;
+            color: #fff;
+            text-align: center;
+            border-radius: 12px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-weight: 500;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        #snackbar.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <img src="https://hyperpg.in/HyperPG.svg" alt="HyperPG Logo" class="logo">
+    </div>
+    
+    <form id="txnForm">
+        <span class="section-label">Link Input</span>
+        <div class="input-group">
+            <label for="upiIntent">Paste Intent Link</label>
+            <input type="text" id="upiIntent" placeholder="upi://pay?..." oninput="parseUPI()">
+        </div>
+
+        <span class="section-label">Transaction Data</span>
+        <div class="input-group">
+            <label>Transaction ID (order_id)</label>
+            <input type="text" id="txnId" class="readonly-field" readonly>
+        </div>
+
+        <div class="row">
+            <div class="input-group">
+                <label>Amount</label>
+                <input type="text" id="amount" class="readonly-field" readonly>
+            </div>
+            <div class="input-group">
+                <label>Merchant ID</label>
+                <input type="text" id="merchantId" value="jpcld">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Status</label>
+            <select id="status" onchange="updateStatusUI()">
+                <option value="success">Success</option>
+                <option value="failure">Failure</option>
+            </select>
+        </div>
+
+        <div id="errorGroup">
+            <div class="input-group">
+                <label>Search Error Code</label>
+                <input type="text" id="errorCodeInput" placeholder="Type to search codes..." autocomplete="off" onfocus="showDropdown()" oninput="filterDropdown()">
+                <div id="errorCodeDropdown" class="dropdown-container">
+                    </div>
+                <div id="errorMsgPreview" class="error-msg-preview"></div>
+            </div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-submit">Submit</button>
+    </form>
+</div>
+
+<div id="snackbar"></div>
+
+<script>
+    const ERROR_MAP = {
+      "L04": "RULE ATTRIBUTE VALUE MUST BE PRESENT; NUMERIC; MINLENGTH 1 MAXLENGTH 255",
+      "V1": "SEQNUM MISMATCH (REMITTER)",
+      "VH": "MANDATE SIGNATURE IS TAMPERED OR CORRUPT (REMITTER)",
+      "S97": "FAILURE",
+      "08": "FAILURE",
+      "U09": "Bank is taking too long to respond. Please try again!",
+      "U08": "Transaction failed",
+      "ZU": "LIMIT EXCEEDED FOR REMITTING BANK/ISSUING BANK",
+      "B3": "Transaction not permitted from this account",
+      "VY": "PAYEE VPA IS INCORRECT (REMITTER)",
+      "U31": "Transaction failed",
+      "FAILURE_RESPONSE": "ResponseTimeout",
+      "XP": "Transaction not permitted on your card please get in touch with your branch",
+      "INTEGRITY CHECK FAILED": "Transaction Failed",
+      "SERVICE_UNAVAILABLE": "UPI service is not reachable at the moment",
+      "BAD_REQUEST": "UnexpectedType \"JSON Text parse failed for udfParameters\"",
+      "INTERNAL_SERVER_ERROR": "INTERNAL_SERVER_ERROR",
+      "U91": "BENEFICIARY BANK DEEMED HIGH RESPONSE TIME CHECK DECLINE",
+      "MR": "FAILURE",
+      "LD": "UNABLE TO PROCESS DEBIT IN BANK'S POOL/BGL ACCOUNT",
+      "QK": "MANDATE REQUEST LIMIT HAS BREACHED",
+      "S99": "FAILURE",
+      "QD": "MANDATE HAS EXPIRED",
+      "LITE_ENGINE_UNAVAILABLE": "FAILURE",
+      "ROUTE-PLAN-NOT-FOUND": "ROUTE-PLAN-NOT-FOUND",
+      "FR9": "FAILURE",
+      "XU": "Bank system not available please try after sometime",
+      "B2": "Account has multiple owners (joint account karta account etc.)",
+      "NO": "NO ORIGINAL REQUEST FOUND DURING DEBIT/CREDIT",
+      "XC": "Transaction declined by beneficiary bank",
+      "UNEXPECTED_GATEWAY_RESPONSE": "Unable to parse gateway response",
+      "U02": "Your bank is facing some issue please try after sometime",
+      "ZX": "Transaction was declined due to inactive or dormant account",
+      "U66": "Transaction failed",
+      "12": "INVALID_TXN  Transaction ID are wrong in ARQC",
+      "U90": "REMITTER BANK DEEMED HIGH RESPONSE TIME CHECK DECLINE",
+      "DF": "DUPLICATE RRN FOUND IN THE TRANSACTION. (BENEFICIARY)",
+      "U16": "Cumulative debit from a single account has exceeded 100k in 24 hours running",
+      "XD": "Amount entered in the transaction was invalid",
+      "ZY": "Beneficiary account is facing some issue",
+      "JP91": "Transaction failed OR Set/Reset MPIN failed.",
+      "ZB": "Merchant details entered is incorrect",
+      "XK": "Transaction declined by beneficiary bank",
+      "UL2": "LITE pre-create not present  LRN is not created/Invalid LRN",
+      "BR": "Your mobile number is registered with more than one name please get in touch with your bank",
+      "01": "Transaction is in pending state",
+      "U19": "Transaction declined",
+      "57": "FAILURE",
+      "U17": "Bank is unreachable. Please try after sometime!",
+      "91": "FAILURE",
+      "ZA": "Transaction declined",
+      "U28": "Remitter bank is not available.",
+      "51": "FAILURE",
+      "UB": "UNABLE TO PROCESS DUE TO INTERNAL EXCEPTION AT SERVER/CBS/ETC ON BENEFICIARY SIDE",
+      "IR": "UNABLE TO PROCESS DUE TO INTERNAL EXCEPTION AT SERVER/CBS/ETC ON REMITTER SIDE",
+      "O3": "Authentication failure - Mismatch (Nonce)",
+      "U89": "BENEFICIARY BANK THROTTLING DECLINE",
+      "L05": "Rule EXPIREAFTER value must be between 1 and 64800",
+      "15": "ISSUER NOT LIVE ON UPI",
+      "RM": "INVALID MPIN ( VIOLATION OF POLICIES WHILE SETTING/CHANGING MPIN )",
+      "U67": "Bank is taking too long to respond. Please try again!",
+      "Z9": "Insufficient funds at the time of transaction",
+      "VO": "PAYMENT STOPPED BY COURT ORDER",
+      "SERVICE_UNAVAILABLE_NPCI_503": "NPCI service is not reachable at the moment (503)",
+      "ZF": "TRANSACTION NOT PERMITTED TO DEVICE",
+      "UX": "Beneficiary payment address expired",
+      "G25": "CERTIFICATE NOT FOUND",
+      "GATEWAY_API_ERROR": "Outgoing api failure while calling gateway",
+      "XV": "Transaction has failed please get in touch with your branch",
+      "VJ": "PAYER ACCOUNT HAS CHANGED (REMITTER)",
+      "UI1": "Country not allowed for UPI services",
+      "S95": "FAILURE",
+      "AJ": "ATM PIN is not operational please get in touch with your branch",
+      "U14": "Transaction failed",
+      "ZG": "Beneficiary payment address restricted",
+      "HS": "BANKS HSM IS DOWN(REMITTER)",
+      "U86": "REMITTER BANK THROTTLING DECLINE",
+      "HS1": "FAILURE",
+      "HS2": "FAILURE",
+      "AMOUNT_CHECK_FAILED": "Integrity check failed",
+      "O4": "Biometric service disabled - Central blocking by the issuer bank",
+      "TM": "COLLECT REQUEST IS DECLINED AS REQUESTOR IS BLOCKED BY CUSTOMER",
+      "UB7": "OTHER BANK/PSP IS NOT SUPPORTED IN 2.0 VERSION",
+      "XN": "You have entered incorrect card details",
+      "AM": "Your UPI PIN is not set please proceed to SET your UPI PIN",
+      "ZE": "TRANSACTION NOT PERMITTED TO VPA by the PSP",
+      "AE": "ARQC VALIDATION ERROR",
+      "XX": "NO FINANCIAL ADDRESS RECORD FOUND",
+      "X1": "Transaction Failed",
+      "M16": "FAILURE",
+      "U03": "Your bank is facing some issue please try after sometime",
+      "XJ": "Transaction was declined by the bank",
+      "Z5": "Beneficiary credentials are incorrect",
+      "ALL-SITE-DOWN-FOR-ROUTE": "ALL-SITE-DOWN-FOR-ROUTE",
+      "ZH": "Beneficiary payment address incorrect",
+      "REQUEST_PENDING": "REQUEST_PENDING",
+      "XH": "Remitter account does not exist",
+      "YE": "Your account is blocked or frozen please get in touch with your branch",
+      "YF": "Beneficiary account is facing some issue",
+      "XR": "Card restricted for usage please get in touch with your branch",
+      "QO": "THIS MANDATE IS NON REVOKEABLE",
+      "SD": "Service disable on UPI/ Customer is not active",
+      "O2": "Biometric Setting failed",
+      "VU": "MANDATE HAS EXPIRED",
+      "B1": "Mobile number linked to your account has been changed",
+      "XF": "Transaction was declined by the bank",
+      "REQUEST_EXPIRED": "REQUEST_EXPIRED",
+      "U69": "Your collect request has expired",
+      "UT": "Remitter bank system is unable to respond at present",
+      "RR": "Remitter bank system is unable to respond at present",
+      "YA": "Card is reported to be lost or stolen",
+      "ZM": "UPI PIN entered for the transaction was incorrect",
+      "XS": "Beneficiary account is facing some issue",
+      "FL": "FIRST TRANSACTION LIMIT EXCEEDED",
+      "Z7": "TRANSACTION FREQUENCY LIMIT EXCEEDED AS SET BY REMITTING MEMBER",
+      "59": "SUSPECTED FRAUD, DECLINE/TRANSACTIONS DECLINED BASED ON RISKSCORE BY REMITTER",
+      "XT": "Bank system not available please try after sometime",
+      "YG": "Merchant system is facing some error",
+      "ZI": "Transaction declined by beneficiary bank",
+      "VM": "NATURE OF DEBIT NOT ALLOWED IN ACCOUNT TYPE",
+      "REQUEST_NOT_FOUND": "REQUEST_NOT_FOUND",
+      "G27": "SIGNATURE MISMATCH",
+      "S96": "FAILURE",
+      "U54": "Transaction failed",
+      "U92": "Payer PSP not available.",
+      "HS3": "FAILURE",
+      "XY": "Your bank system is offline please try after sometime",
+      "YI": "INVALID RESPONSE CODE",
+      "DT": "DUPLICATE RRN FOUND IN THE TRANSACTION. (REMITTER)",
+      "Y1": "Beneficiary bank system is offline please try after sometime",
+      "QL": "MANDATE DEBIT IS BEYOND PSP SPECIFIED AMOUNT CAP",
+      "FP": "FREEZE PERIOD FOR FIRST TIME USER",
+      "U53": "Transaction failed",
+      "VP": "WITHDRAWAL STOPPED OWING TO DEATH OF ACCOUNT HOLDER",
+      "XL": "Your card has expired please get in touch with your branch",
+      "00": "Collect request sent successfully",
+      "UP": "PSP TIME-OUT",
+      "SA": "TRANSACTION NOT PERMITTED FOR THIS A/C TYPE",
+      "ND": "FAILURE",
+      "QU": "PAYER ACCOUNT HAS CHANGED (PAYER)",
+      "Z6": "Number of pin tries exceeded for the transaction",
+      "U30": "Transaction failed",
+      "ZD": "Transaction has failed",
+      "OD": "FAILURE",
+      "XI": "Beneficiary account does not exist",
+      "IE": "ADEQUATE FUNDS NOT AVAILABLE IN THE ACCOUNT BECAUSE FUNDS HAVE BEEN BLOCKED FOR MANDATE",
+      "U48": "Transaction failed",
+      "V4": "FAILURE",
+      "K1": "SUSPECTED FRAUD, DECLINE / TRANSACTIONS DECLINED BASED ON RISK SCORE BY REMITTER",
+      "Z8": "PER TRANSACTION LIMIT EXCEEDED AS SET BY REMITTING MEMBER",
+      "XB": "Transaction has failed please get in touch with your branch",
+      "VA": "MANDATE HAS BEEN REVOKED",
+      "U29": "Transaction failed",
+      "96": "FAILURE",
+      "JPFRI": "The mobile number is restricted under FRI list of C-DOT",
+      "U93": "Payee PSP not available.",
+      "S1": "PAYEE IS REPORTED AS SPAM UNDER RULE 1",
+      "XQ": "Transactions not permitted to beneficiary",
+      "YC": "Transaction has failed please get in touch with your branch",
+      "VF": "UMN DOES NOT EXIST (REMITTER)",
+      "PM2": "PAYER/PAYEE.MERCHANT.IDENTIFIER.MID MUST BE OF MINLENGTH 1 MAXLENGTH 20"
+    };
+
+    const dropdown = document.getElementById('errorCodeDropdown');
+    const inputField = document.getElementById('errorCodeInput');
+
+    function showDropdown() {
+        filterDropdown();
+        dropdown.style.display = 'block';
+    }
+
+    function filterDropdown() {
+        const val = inputField.value.toUpperCase();
+        dropdown.innerHTML = '';
+        Object.keys(ERROR_MAP)
+            .filter(code => code.toUpperCase().includes(val))
+            .sort()
+            .forEach(code => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.innerText = code;
+                item.onclick = () => selectCode(code);
+                dropdown.appendChild(item);
+            });
+    }
+
+    function selectCode(code) {
+        inputField.value = code;
+        document.getElementById('errorMsgPreview').innerText = ERROR_MAP[code];
+        dropdown.style.display = 'none';
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.input-group')) dropdown.style.display = 'none';
+    });
+
+    function parseUPI() {
+        const urlString = document.getElementById('upiIntent').value;
+        if (!urlString.includes('?')) return;
+        const params = new URLSearchParams(urlString.split('?')[1]);
+        document.getElementById('txnId').value = params.get('tr') || params.get('tid') || '';
+        document.getElementById('amount').value = params.get('am') || '0.00';
+    }
+
+    function updateStatusUI() {
+        document.getElementById('errorGroup').style.display = 
+            document.getElementById('status').value === 'failure' ? 'block' : 'none';
+    }
+
+    function showSnackbar(message, type) {
+        const x = document.getElementById("snackbar");
+        x.innerText = message;
+        x.style.backgroundColor = (type === "SUCCESS") ? "var(--success-color)" : (type === "FAILURE" ? "var(--failure-color)" : "var(--warning-color)");
+        x.className = "show";
+        setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+    }
+
+    document.getElementById('txnForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        const merchantId = document.getElementById('merchantId').value;
+        const statusVal = document.getElementById('status').value;
+        const code = inputField.value;
+
+        // Map status to "00" or "02" as requested
+        const statusMapping = { 'success': '00', 'failure': '02' };
+
+        const payload = {
+            order_id: document.getElementById('txnId').value,
+            amount: document.getElementById('amount').value,
+            merchant_id: merchantId,
+            status: statusMapping[statusVal],
+            response_code: statusVal === 'failure' ? code : 'SUCCESS',
+            response_message: statusVal === 'failure' ? (ERROR_MAP[code] || 'FAILURE') : 'SUCCESS'
+        };
+
+        const targetUrl = `https://sandbox.hyperpg.in/v2/pay/webhooks/${merchantId}/DUMMY`;
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Processing...";
+
+        try {
+            const response = await fetch(targetUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            showSnackbar(result.message || "Processed", result.status);
+        } catch (error) {
+            showSnackbar("Network error or invalid JSON", "FAILURE");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit";
+        }
+    });
+</script>
+
+</body>
+</html>
