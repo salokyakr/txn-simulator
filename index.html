@@ -550,7 +550,7 @@
         response_message: statusVal === 'failure' ? (ERROR_MAP[selectedCode] || 'FAILURE') : 'SUCCESS'
       };
 
-      const targetUrl = `http://localhost:8080/v2/pay/webhooks/${merchantId}/DUMMY`;
+      const targetUrl = `https://sandbox.hyperpg.in/v2/pay/webhooks/${merchantId}/DUMMY`;
       submitBtn.disabled = true;
       submitBtn.innerText = "Processing...";
 
